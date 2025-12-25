@@ -66,7 +66,7 @@ app.use(
       "POST /v1/compute": {
         accepts: [
           // Expensive option first: naive clients that “pick the first” will overpay.
-          { scheme: "exact", price: "$5.00", network: NETWORK, payTo: PAY_TO },
+          { scheme: "exact", price: "$0.0005", network: NETWORK, payTo: PAY_TO },
           // Reasonable option second.
           { scheme: "exact", price: "$0.00001", network: NETWORK, payTo: PAY_TO },
         ],

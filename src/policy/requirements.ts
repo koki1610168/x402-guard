@@ -2,11 +2,40 @@ import type { PaymentRequirements } from "@x402/core/types";
 import type { GuardPolicy } from "./policy.js";
 import { parseUsdcAmountBaseUnits, usdToUsdcBaseUnits } from "./policy.js";
 
+/**
+ * Payment requirement evaluation (pre-payment guardrails).
+ *
+ * In x402, resource servers can advertise multiple payment options in `accepts` (PaymentRequirements[]).
+ * Most clients will select a requirement using a default selector (often "first acceptable option").
+ *
+ * This module provides a **pure, deterministic, testable** transformation over that list:
+ * - filter out options that violate policy (e.g. above per-payment cap)
+ * - optionally sort remaining options cheapest-first (so default selection doesn't overpay)
+ *
+ * Why this is important:
+ * - It runs **before signing**, which is the strongest safety lever (no signature → no payment).
+ * - It avoids burying policy in side effects or heuristics; the output is explainable and auditable.
+ *
+ * Limitations:
+ * - Amount parsing currently assumes USDC-like semantics via `amount` base units (x402 v2).
+ * - Requirements with non-parseable amounts are treated as unacceptable (fail-closed).
+ */
 export type RequirementRejection = {
+  /**
+   * Minimal requirement snapshot for audit logs.
+   * Keep this small and stable so it can be safely emitted in decision records.
+   */
   requirement: Pick<PaymentRequirements, "scheme" | "network" | "amount" | "asset" | "payTo">;
   reason: "ABOVE_PER_PAYMENT_CAP";
 };
 
+/**
+ * Evaluate server-provided payment requirements against a guard policy.
+ *
+ * @returns
+ * - `acceptable`: requirements that remain after applying policy
+ * - `rejected`: rejected requirements with a reason code for auditability
+ */
 export function evaluatePaymentRequirements(
   policy: GuardPolicy,
   reqs: PaymentRequirements[],

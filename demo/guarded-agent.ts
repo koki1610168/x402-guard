@@ -28,7 +28,7 @@ async function main() {
     client,
     policy: {
       // For demo: ensure we never pick the expensive “first option” if it’s above this cap.
-      maxPerPaymentUsd: 0.10,
+      maxPerPaymentUsd: 0.0001,
 
       // For demo: if the API keeps returning junk and we keep retrying, stop after tiny spend.
       budget: { limitUsd: 0.25, windowMs: 60_000 },
