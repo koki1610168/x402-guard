@@ -1,23 +1,23 @@
 ## Threat Model
 
-This document describes the security goals and threat model for **x402-Guard**: a policy layer that protects autonomous agents from unintended loss when making payments via the x402 protocol.
+This document describes the security goals and threat model for **x402-guard**: a policy layer that protects autonomous agents from unintended loss when making payments via the x402 protocol.
 
 **Key layering principle**
 
 - **x402** defines *how* payment is negotiated/signed/settled.
-- **x402-Guard** defines *when* a payment should be blocked (explicit, deterministic policy).
+- **x402-guard** defines *when* a payment should be blocked (explicit, deterministic policy).
 
 ---
 
 ## Security goals
 
-x402-Guard is designed to enforce three invariants:
+x402-guard is designed to enforce three invariants:
 
 - **Per-payment spend cap**: no single payment exceeds a configured maximum.
 - **Budget cap within a rolling time window**: total spend in a window is bounded.
 - **Response conditions**: responses must satisfy explicit conditions (status/latency/schema) to avoid retry-drain and junk acceptance.
 
-When an invariant would be violated, x402-Guard must:
+When an invariant would be violated, x402-guard must:
 
 - **Fail closed** (do not sign / do not pay).
 - Return a **machine-readable reason code** and a **human-readable explanation**.
@@ -41,9 +41,9 @@ Non-assets / out of scope (see below): private keys and runtime integrity.
 
 - **Autonomous agent**: code that decides when to call paid endpoints.
 - **x402 client**: creates payment headers/payloads for acceptable requirements.
-- **x402-Guard**: policy layer that constrains what the agent is allowed to pay for.
+- **x402-guard**: policy layer that constrains what the agent is allowed to pay for.
 
-Assumption: x402-Guard runs inside the agent process (same trust boundary).
+Assumption: x402-guard runs inside the agent process (same trust boundary).
 
 ### Server-side (external)
 
@@ -86,14 +86,14 @@ These are the primary real-world failure modes for autonomous payments, mapped t
 
 ---
 
-## What x402-Guard cannot prevent (important limitations)
+## What x402-guard cannot prevent (important limitations)
 
 ### Pay-to-access limitation (first payment)
 
 In typical x402 pay-to-access flows, the client may need to pay before receiving the protected body.  
 Therefore:
 
-- x402-Guard can prevent **obviously bad payments** *before signing* (caps/budgets/selection),
+- x402-guard can prevent **obviously bad payments** *before signing* (caps/budgets/selection),
 - but it cannot guarantee you’ll never pay once to discover a service is low quality, unless the server supports previews/unpaid responses.
 
 ### In-memory budget accounting (current)

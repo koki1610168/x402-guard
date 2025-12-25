@@ -1,8 +1,8 @@
-# x402-Guard
+# x402-guard
 
 **Security guardrails for autonomous payments on top of the x402 payment protocol.**
 
-**x402 defines how payments are made. x402-Guard defines when payments should be blocked.**  
+**x402 defines how payments are made. x402-guard defines when payments should be blocked.**  
 This repo adds a deterministic policy + safety layer **without modifying x402**.
 
 ## Why this exists
@@ -13,11 +13,11 @@ Autonomous agents can make programmatic payments without human oversight. That c
 - **Malicious/accidental overpricing**: services offer valid options but steer clients into expensive choices
 - **Paying for junk/partial service**: responses are unusable after payment, triggering more paid retries
 
-x402-Guard makes these risks **explicit, testable, and auditable**.
+x402-guard makes these risks **explicit, testable, and auditable**.
 
 ## Security guarantees (invariants)
 
-x402-Guard enforces three invariants:
+x402-guard enforces three invariants:
 
 - **Per-payment spend cap**: no single payment exceeds a configured maximum
 - **Budget cap within a time window**: total spend over a rolling window is bounded
@@ -94,7 +94,7 @@ Expected behavior:
 
 ## Sample output (audit records)
 
-When running `pnpm demo:guarded`, x402-Guard can emit structured decision records via `onDecision(...)`.
+When running `pnpm demo:guarded`, x402-guard can emit structured decision records via `onDecision(...)`.
 
 ### Denied (example)
 
@@ -142,7 +142,7 @@ When running `pnpm demo:guarded`, x402-Guard can emit structured decision record
 
 ## SDK usage
 
-x402-Guard wraps an `x402Client` and `fetch`. You keep full control of x402 schemes/signers.
+x402-guard wraps an `x402Client` and `fetch`. You keep full control of x402 schemes/signers.
 
 ```ts
 import { X402Guard, GuardError } from "x402-guard";
@@ -195,7 +195,7 @@ try {
 - **Auditability**: structured decision records + stable reason codes
 - **Protocol isolation**: x402 remains the payment protocol; guard remains the policy layer
 
-## Important limitations (honest security model)
+## Important limitations 
 
 - In typical **pay-to-access** flows, a client may need to pay before receiving the protected body.  
   Guardrails therefore focus on:

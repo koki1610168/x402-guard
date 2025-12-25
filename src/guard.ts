@@ -11,7 +11,7 @@ import type { GuardDecision } from "./receipt.js";
 export type X402GuardConfig = {
   /**
    * A configured x402 client (schemes registered, signer set up).
-   * x402-Guard does not modify x402; it wraps the client with policy.
+   * x402-guard does not modify x402; it wraps the client with policy.
    */
   client: x402Client;
   policy: GuardPolicy;
@@ -31,7 +31,7 @@ export type X402GuardConfig = {
  *
  * The key design principle is separation of concerns:
  * - x402 determines *how* payment headers are negotiated/signed/settled.
- * - x402-Guard determines *when* a payment should be blocked.
+ * - x402-guard determines *when* a payment should be blocked.
  *
  * Enforcement points:
  * - **Before payment** (safe / preferred): filter payment requirements and abort signing.

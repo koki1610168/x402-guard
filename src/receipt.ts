@@ -2,7 +2,7 @@ import type { PaymentRequirements } from "@x402/core/types";
 import type { GuardErrorCode } from "./utils/errors.js";
 
 /**
- * GuardDecision is the structured "receipt" emitted by x402-Guard.
+ * GuardDecision is the structured "receipt" emitted by x402-guard.
  *
  * Design goals:
  * - **Auditability**: explain *why* an allow/deny happened with minimal but useful context.

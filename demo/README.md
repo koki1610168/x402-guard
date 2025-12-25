@@ -1,4 +1,4 @@
-## Demo: Real-World Threats in Autonomous x402 Payments (Why x402-Guard Exists)
+## Demo: Real-World Threats in Autonomous x402 Payments (Why x402-guard Exists)
 
 This demo intentionally recreates what happens when an autonomous agent makes x402 payments **without a safety policy layer**. These failure modes are not theoretical—they’re the kinds of bugs and adversarial behaviors that show up immediately once agents can pay unattended.
 
@@ -93,6 +93,6 @@ To make autonomous payments safe in practice, we need deterministic guardrails:
 - **Budget caps over time windows** (stop retry drains)
 - **Conditional execution / response gating** (don’t pay for junk)
 
-**x402-Guard** is designed to enforce these policies with **deterministic decisions** and **human-readable explanations**, making failures auditable and production-ready.
+**x402-guard** is designed to enforce these policies with **deterministic decisions** and **human-readable explanations**, making failures auditable and production-ready.
 
 

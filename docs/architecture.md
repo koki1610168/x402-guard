@@ -1,11 +1,11 @@
 ## Architecture
 
-x402-Guard is a **policy enforcement layer** for autonomous payments made via the x402 protocol.
+x402-guard is a **policy enforcement layer** for autonomous payments made via the x402 protocol.
 
 Core separation:
 
 - **x402** defines **how** payments are negotiated/signed/settled (protocol + SDKs).
-- **x402-Guard** defines **when** a payment should be blocked (explicit, deterministic policy).
+- **x402-guard** defines **when** a payment should be blocked (explicit, deterministic policy).
 
 This keeps the protocol simple while making real-world autonomous payment flows safe.
 
@@ -15,17 +15,17 @@ This keeps the protocol simple while making real-world autonomous payment flows 
 
 1. Agent makes an HTTP request using guarded fetch (`X402Guard.fetch(...)`).
 2. Resource server replies with `402 Payment Required` and an `accepts` list (x402).
-3. x402-Guard applies **pre-payment policies** to `accepts`:
+3. x402-guard applies **pre-payment policies** to `accepts`:
    - reject overpriced requirements (per-payment cap)
    - optionally sort cheapest-first
-4. Before signing a payment payload, x402-Guard enforces **budget window** (retry-drain prevention).
+4. Before signing a payment payload, x402-guard enforces **budget window** (retry-drain prevention).
    - if over budget, it **aborts** (no signature → no payment header)
 5. If allowed, x402 creates the payment payload and retries the request with payment headers.
-6. After a response is received, x402-Guard enforces **response conditions**:
+6. After a response is received, x402-guard enforces **response conditions**:
    - status (2xx)
    - latency
    - required JSON fields (missing/null fails)
-7. x402-Guard emits a structured **decision record** (`allow`/`deny`) for audit logs / demos.
+7. x402-guard emits a structured **decision record** (`allow`/`deny`) for audit logs / demos.
 
 ---
 
@@ -39,7 +39,7 @@ These checks happen **before** a payment payload is signed:
 - **Cheapest selection**: sorts acceptable requirements by `amount` (base units) so default selection doesn’t overpay
 - **Rolling budget window**: blocks spending above the configured `budget` limit inside `windowMs`
 
-If pre-payment checks fail, x402-Guard fails closed:
+If pre-payment checks fail, x402-guard fails closed:
 
 - it prevents signing
 - it prevents sending a payment header

@@ -6,7 +6,7 @@ export type GuardErrorCode =
   | "RESPONSE_CONDITION_FAILED";
 
 /**
- * GuardError is the single error type thrown by x402-Guard.
+ * GuardError is the single error type thrown by x402-guard.
  *
  * Design goals:
  * - **Machine-readable**: stable `code` for programmatic handling and metrics
