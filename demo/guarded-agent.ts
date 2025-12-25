@@ -41,7 +41,7 @@ async function main() {
     },
     onDecision: (record) => {
       // eslint-disable-next-line no-console
-      console.log(`[guarded-agent] decision=${record.decision} record=${JSON.stringify(record)}`);
+      console.log(`[guarded-agent] decision=${record.decision} record=${JSON.stringify(record, null, 2)}`);
     },
   });
 

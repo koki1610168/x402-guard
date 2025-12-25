@@ -92,6 +92,54 @@ Expected behavior:
 - blocks/flags junk/partial responses (conditions) to stop paid retry loops
 - prints structured decision records (audit output)
 
+## Sample output (audit records)
+
+When running `pnpm demo:guarded`, x402-Guard can emit structured decision records via `onDecision(...)`.
+
+### Denied (example)
+
+```json
+{
+  "decision": "deny",
+  "at": "2025-12-25T07:17:38.510Z",
+  "request": { "url": "http://localhost:3000/v1/compute", "method": "POST" },
+  "code": "RESPONSE_CONDITION_FAILED",
+  "explanation": "Response status failed policy (expected 2xx).",
+  "details": { "status": 500, "latencyMs": 640 },
+  "payment": {
+    "selected": { "scheme": "exact", "network": "eip155:84532", "amount": "10", "asset": "0x...", "payTo": "0x..." },
+    "rejected": [
+      {
+        "requirement": { "scheme": "exact", "network": "eip155:84532", "amount": "5000000", "asset": "0x...", "payTo": "0x..." },
+        "reason": "ABOVE_PER_PAYMENT_CAP"
+      }
+    ],
+    "budget": { "windowMs": 60000, "totalBeforeBaseUnits": "0", "totalAfterBaseUnits": "10", "limitBaseUnits": "250000" }
+  }
+}
+```
+
+### Allowed (example)
+
+```json
+{
+  "decision": "allow",
+  "at": "2025-12-25T07:20:43.717Z",
+  "request": { "url": "http://localhost:3000/v1/compute", "method": "POST" },
+  "payment": {
+    "selected": { "scheme": "exact", "network": "eip155:84532", "amount": "10", "asset": "0x...", "payTo": "0x..." },
+    "rejected": [
+      {
+        "requirement": { "scheme": "exact", "network": "eip155:84532", "amount": "5000000", "asset": "0x...", "payTo": "0x..." },
+        "reason": "ABOVE_PER_PAYMENT_CAP"
+      }
+    ],
+    "budget": { "windowMs": 60000, "totalBeforeBaseUnits": "0", "totalAfterBaseUnits": "10", "limitBaseUnits": "250000" }
+  },
+  "response": { "status": 200, "latencyMs": 1403 }
+}
+```
+
 ## SDK usage
 
 x402-Guard wraps an `x402Client` and `fetch`. You keep full control of x402 schemes/signers.
