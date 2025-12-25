@@ -1,29 +1,32 @@
 {
-    "name": "x402-guard",
-    "version": "0.1.0",
-    "description": "Security guardrails for autonomous x402 payments",
-    "type": "module",
-    "license": "MIT",
-    "private": true,
-  
-    "scripts": {
-      "dev": "tsx src/index.ts",
-      "demo:naive": "tsx demo/naive-agent.ts",
-      "demo:guarded": "tsx demo/guarded-agent.ts",
-      "build": "tsc",
-      "test": "vitest"
-    },
-  
-    "dependencies": {
-      "@x402/fetch": "^2.1.0",
-      "dotenv": "^16.4.7"
-    },
-  
-    "devDependencies": {
-      "typescript": "^5.3.0",
-      "tsx": "^4.7.0",
-      "vitest": "^1.3.0",
-      "@types/node": "^20.11.0"
-    }
+  "name": "x402-guard",
+  "version": "0.1.0",
+  "description": "Security guardrails for autonomous x402 payments",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "demo:api": "tsx demo/malicious-api.ts",
+    "demo:naive": "tsx demo/naive-agent.ts",
+    "demo:guarded": "tsx demo/guarded-agent.ts",
+    "build": "tsc",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@x402/core": "^2.1.0",
+    "@x402/evm": "^2.1.0",
+    "@x402/express": "^2.1.0",
+    "@x402/fetch": "^2.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "viem": "^2.43.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.3.0"
   }
-  
+}
