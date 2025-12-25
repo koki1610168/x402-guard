@@ -1,45 +1,41 @@
 # x402-Guard
 
-Security guardrails for autonomous payments on top of the **x402** payment protocol.
+**Security guardrails for autonomous payments on top of the x402 payment protocol.**
 
 **x402 defines how payments are made. x402-Guard defines when payments should be blocked.**  
 This repo adds a deterministic policy + safety layer **without modifying x402**.
 
 ## Why this exists
 
-Autonomous agents can make programmatic payments without human oversight. That’s powerful, but it creates new failure modes that look like “normal bugs” and quickly become **irreversible financial loss**:
+Autonomous agents can make programmatic payments without human oversight. That creates failure modes that look like “normal bugs” but can cause **rapid, irreversible financial loss**:
 
-- Infinite retry drains (paying repeatedly while retrying failures)
-- Malicious or accidental overpricing (valid responses, unreasonable price)
-- Paying for junk/partial service responses
+- **Infinite retry drain**: agents retry failing calls and pay every attempt
+- **Malicious/accidental overpricing**: services offer valid options but steer clients into expensive choices
+- **Paying for junk/partial service**: responses are unusable after payment, triggering more paid retries
 
-x402-Guard is a lightweight “seatbelt” that makes these failure modes **explicit, testable, and auditable**.
+x402-Guard makes these risks **explicit, testable, and auditable**.
 
 ## Security guarantees (invariants)
 
-x402-Guard enforces three core invariants:
+x402-Guard enforces three invariants:
 
-- **Per-payment spend cap**: no single payment can exceed a configured maximum
-- **Budget cap within a time window**: total spend over a session/window is bounded
-- **Conditional payment execution**: payments only finalize if the service response satisfies explicit conditions (status/shape/latency/etc.)
+- **Per-payment spend cap**: no single payment exceeds a configured maximum
+- **Budget cap within a time window**: total spend over a rolling window is bounded
+- **Response conditions**: responses must satisfy explicit conditions (status/latency/schema) to avoid retry-drain
 
-When a payment is blocked, the guard returns a **machine-readable reason code** plus a **human-readable explanation** suitable for logs, dashboards, or demos.
+When blocked, the guard throws a `GuardError` with:
 
-## Non-goals
+- a **machine-readable** `code`
+- a **human-readable** `explanation`
+- optional `details` for debugging/audit
 
-- Replacing or changing the x402 protocol (x402-Guard is strictly a layer *above* x402)
-- Hiding policy decisions inside opaque heuristics (decisions must be deterministic and explainable)
-- Being “the” agent framework (this should wrap any agent code that can call an x402 client)
+It can also emit structured **decision records** (`allow` / `deny`) via `onDecision(...)`.
 
-## Project status
+## What’s in this repo
 
-**Current status: scaffold / early prototype.**
-
-- **Implemented today**: repo scaffolding + design doc (`docs/DESIGN.md`)
-- **Planned next**: `X402Guard` SDK, policy engine, receipts/denials, demo harness, and tests (see Roadmap)
-
-If you’re a hackathon judge or reviewer, start with the design doc:
-- `docs/DESIGN.md`
+- **SDK**: `src/` (`X402Guard`, policy helpers, decision records)
+- **Demo harness**: `demo/` (malicious resource server + naive/guarded agents)
+- **Tests**: `test/` (cap/selection, budget window, response conditions)
 
 ## Install
 
@@ -47,113 +43,122 @@ If you’re a hackathon judge or reviewer, start with the design doc:
 pnpm install
 ```
 
-## Demo (threat models)
+## Quickstart (demo)
 
-This repo includes a deliberately adversarial x402 resource server plus a naive agent to reproduce common autonomous-payment failures.
+See `demo/README.md` for the threat model explanation.
 
 ### 1) Configure env
 
-Create a local `.env` in the repo root using:
+Create `.env` in the repo root based on:
 
-- `demo/env.example`
+- `env.example`
 
-### 2) Run the malicious API (resource server)
+### 2) Start the malicious x402 resource server
 
 ```bash
 pnpm demo:api
 ```
 
-### 3) Run the naive agent (client)
+Deterministic controls (via `.env` or query param):
+
+- `MALICIOUS_MODE=random|good|junk|partial|error`
+- `MALICIOUS_SEED=...` (reproducible randomness)
+- `MALICIOUS_LOG_MODE=1` (log chosen mode)
+- `POST /v1/compute?mode=junk` (force per-request mode)
+
+
+### 3) Run the naive agent (unsafe)
 
 ```bash
 pnpm demo:naive
 ```
 
-What you should see:
+Expected behavior:
 
-- The server offers **two payment options**, with the **expensive option first**
-- The naive agent **picks the first**, pays, and then **retries** when responses are junk/partial
-- Logs show repeated payments (retry drain) and overpaying (overpricing)
+- picks the first payment option
+- pays repeatedly on retries
+- demonstrates overpricing + retry drain
 
-## Quickstart (current)
-
-This is a placeholder entrypoint while we build the SDK:
+### 4) Run the guarded agent (protected)
 
 ```bash
-pnpm dev
+pnpm demo:guarded
 ```
 
-## Design principles (what “production-grade” means here)
+Expected behavior:
 
-- **Deterministic enforcement**: same inputs → same decision
-- **Fail-closed by default**: if policy can’t be evaluated safely, do not pay
-- **Auditable decisions**: every allow/deny emits structured context (receipts / denial records)
-- **Protocol isolation**: x402 integration is behind a thin adapter so guard logic stays testable
+- filters/avoids expensive payment options (cap + cheapest selection)
+- enforces a rolling budget window (blocks **before** signing new payments)
+- blocks/flags junk/partial responses (conditions) to stop paid retry loops
+- prints structured decision records (audit output)
 
-## Proposed SDK (API sketch)
+## SDK usage
 
-This is the target developer experience; implementation will land in `src/` per `docs/DESIGN.md`.
+x402-Guard wraps an `x402Client` and `fetch`. You keep full control of x402 schemes/signers.
 
 ```ts
-import { X402Guard } from "x402-guard";
+import { X402Guard, GuardError } from "x402-guard";
+import { x402Client } from "@x402/fetch";
+import { ExactEvmScheme } from "@x402/evm";
+import { privateKeyToAccount } from "viem/accounts";
 
-const guard = new X402Guard({
+const account = privateKeyToAccount(process.env.EVM_PRIVATE_KEY as `0x${string}`);
+
+const client = new x402Client()
+  .register("eip155:*", new ExactEvmScheme(account));
+
+const guard = new X402Guard(fetch, {
+  client,
   policy: {
-    maxPerPayment: 0.50,                 // USD (example)
-    budget: { limit: 5.00, windowMs: 60_000 },
+    // Pre-payment controls
+    maxPerPaymentUsd: 0.10,
+    budget: { limitUsd: 1.0, windowMs: 60_000 },
+    selectCheapest: true,
+
+    // Post-response controls (prevents retry-drain / junk acceptance)
     conditions: {
       requireHttp2xx: true,
       maxLatencyMs: 2_000,
       requiredJsonFields: ["result"],
     },
   },
+  onDecision: (record) => {
+    // Send to logs/metrics/audit store
+    console.log(JSON.stringify(record));
+  },
 });
 
-const res = await guard.fetch("https://api.example.com/compute", {
-  method: "POST",
-  body: JSON.stringify({ prompt: "..." }),
-});
-
-// If blocked, the error includes a reason code + human-readable explanation.
+try {
+  const res = await guard.fetch("https://example.com/v1/compute", { method: "POST" });
+  console.log(await res.json());
+} catch (e) {
+  if (e instanceof GuardError) {
+    console.error(e.code, e.explanation, e.details);
+  } else {
+    throw e;
+  }
+}
 ```
 
-## Threat model (what we defend against)
+## Design principles
 
-x402-Guard focuses on three common autonomous-payment failures:
+- **Deterministic enforcement**: same inputs → same decision
+- **Fail-closed defaults**: if policy evaluation fails, do not pay
+- **Auditability**: structured decision records + stable reason codes
+- **Protocol isolation**: x402 remains the payment protocol; guard remains the policy layer
 
-- **Infinite retry drain**: repeated attempts keep paying (or keep authorizing) while failing
-- **Overpricing**: services charge above reasonable limits or above an agreed cap
-- **Fake/partial service**: responses are junk, truncated, malformed, or violate required structure
+## Important limitations (honest security model)
 
-## Roadmap
+- In typical **pay-to-access** flows, a client may need to pay before receiving the protected body.  
+  Guardrails therefore focus on:
+  - blocking obviously bad payments **before signing** (caps/budgets/selection)
+  - preventing **repeat loss** via retries (response conditions)
 
-- **Core SDK**: `src/guard.ts` orchestration + public exports in `src/index.ts`
-- **Policy**: explicit policy types + validation (`src/policy/*`)
-- **Budget accounting**: spend windows + retry-aware draining prevention
-- **Conditional execution**: response-gated finalize (status/shape/latency/size)
-- **Receipts & denials**: structured audit records with reason codes + explanations
-- **Demos**: naive vs guarded agent + malicious API harness
-- **Tests**: focused unit tests for policy/budget/guard decisions
-- **Docs**: architecture + threat model (expanded beyond `DESIGN.md`)
+## Tests
 
-## Security notes
-
-This repository is intended to reduce accidental loss from autonomous payment flows, but it is **not a substitute for**:
-
-- key management best practices
-- runtime sandboxing for agents
-- merchant allowlists / trust frameworks
-- monitoring and alerting
-
-If you find a security issue, please open a private disclosure (or open an issue if the impact is non-sensitive).
-
-## Contributing
-
-Contributions are welcome. If you’re adding new policy surfaces, please:
-
-- keep rules deterministic and explainable
-- include reason codes + a human-readable explanation
-- add a minimal test that demonstrates the failure mode being prevented
+```bash
+pnpm test
+```
 
 ## License
 
