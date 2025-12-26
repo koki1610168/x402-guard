@@ -30,14 +30,14 @@ export type GuardPolicy = {
    */
   maxPerPaymentUsd?: number;
 
+  /** If true, prefer the cheapest `amount` among acceptable requirements. */
+  selectCheapest?: boolean;
+
   /** Rolling spend limit inside a time window (USD for USDC). */
   budget?: BudgetWindowPolicy;
 
   /** Response quality checks (note: cannot prevent the *first* payment, but can prevent retry-drain). */
-  conditions?: GuardConditions;
-
-  /** If true, prefer the cheapest `amount` among acceptable requirements. */
-  selectCheapest?: boolean;
+  conditions?: GuardConditions;  
 };
 
 /**

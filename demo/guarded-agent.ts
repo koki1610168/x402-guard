@@ -30,14 +30,14 @@ async function main() {
       // For demo: ensure we never pick the expensive “first option” if it’s above this cap.
       maxPerPaymentUsd: 0.0001,
 
+      // Prefer cheapest among remaining acceptable requirements.
+      selectCheapest: true,
+
       // For demo: if the API keeps returning junk and we keep retrying, stop after tiny spend.
       budget: { limitUsd: 0.25, windowMs: 60_000 },
 
       // For demo: reject non-2xx and require the JSON to have `result`.
       conditions: { requireHttp2xx: true, requiredJsonFields: ["result"], maxLatencyMs: 2_000 },
-
-      // Prefer cheapest among remaining acceptable requirements.
-      selectCheapest: true,
     },
     onDecision: (record) => {
       // eslint-disable-next-line no-console
